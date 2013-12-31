@@ -39,6 +39,8 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   /*
    * The contents of this actor is just a suggestion, you can implement it in any way you like.
    */
+  
+  arbiter ! Join
 
   var kv = Map.empty[String, String]
   // a map from secondary replicas to replicators
@@ -59,9 +61,11 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
 
     case Insert(key, value, id) =>
       kv += (key -> value)
+      sender ! OperationAck(id)
 
     case Remove(key, id) =>
       kv -= key
+      sender ! OperationAck(id)
 
     case _ => println("Something go wrong")
   }
@@ -71,7 +75,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case Get(key, id) =>
       sender ! GetResult(key, kv.get(key), id)
       
-    case _ => println("Something go wrong")
+    case x => println("Something go wrong :: " + x)
   }
 
 }
